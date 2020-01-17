@@ -1,25 +1,54 @@
-import Vue from 'vue'
-import Router from 'vue-router'
-import Home from './views/Home.vue'
+import Vue from "vue";
+import Router from "vue-router";
+import store from "./store";
 
-Vue.use(Router)
+import Home from "./views/Home.vue";
 
-export default new Router({
-  mode: 'history',
+Vue.use(Router);
+
+let router = new Router({
+  mode: "history",
   base: process.env.BASE_URL,
   routes: [
     {
-      path: '/',
-      name: 'home',
-      component: Home
+      path: "/",
+      name: "home",
+      component: Home,
+      meta: { view: Home.name }
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (about.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import(/* webpackChunkName: "about" */ './views/About.vue')
+      path: "/plugin/new",
+      name: "pluginNew",
+      component: () => import("./views/PluginNew.vue"),
+      meta: { view: "pluginNew" }
+    },
+    {
+      path: "/plugin/:id",
+      name: "pluginDetail",
+      component: () => import("./views/PluginDetail.vue"),
+      props: true,
+      meta: { view: "pluginDetail" }
+    },
+    {
+      path: "*",
+      redirect: "/home"
     }
   ]
-})
+});
+
+router.beforeEach((to, from, next) => {
+  if (to.matched.some(record => record.meta.requireAuth)) {
+    if (store.getters["auth/isAuthenticated"]) {
+      next();
+    } else {
+      next({
+        path: "/home",
+        query: { requireSignIn: "true" }
+      });
+    }
+  } else {
+    next();
+  }
+});
+
+export default router;
